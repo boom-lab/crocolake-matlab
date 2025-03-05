@@ -1,0 +1,6 @@
+# Remove all files except matlab scripts
+*
+!*.m
+!.gitignore
+!README.md
+*untitled*.m
