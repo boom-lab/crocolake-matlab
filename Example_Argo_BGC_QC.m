@@ -1,37 +1,23 @@
 %% ===================================================================== %%
-% Loading BGC coverage
+% Dissolved oxygen map - Argo BGC 'QC'
 % ======================================================================= %
 %
-% This example shows how to read and manipulate Argo data stored in parquet
-% format. We will filter the data by depth (pressure) and time. We will 
-% then compute the average value of the chlorophyll measured by each float 
-% and plot it.
-%
-% This script has been developed and tested on MATLAB R2024a. MATLAB R2022a
-% and newer versions should be supported. Older versions will almost 
-% certainly fail -- parquet is a fairly recent format and MATLAB support is
-% even more recent.
-%
-% 2025-01-08 Update:
-% In the new version of the QC-ed database, only the best values for each
-% paramater are kept and only one parameter name <PARAM> (and <PARAM>_QC)
-% are in the database. <PARAM> contains the value of the GDAC's
-% <PARAM>_ADJUSTED whenever this is present and <PARAM>_ADJUSTED_QC in
-% [1,2], otherwise the value of <PARAM> if <PARAM>_QC in [1,2], otherwise
-% NaN.
+% This example shows how to read and manipulate QCed Argo data stored in 
+% parquet format. We will filter the data by pressure, time, and data 
+% quality. We will then compute the average value of the dissolved oxygen 
+% reported by each float and plot it.
 %
 %% Setup
 % Set up the reader. Here we generate a ParquetDatastore object of the 
 % database (no need to know the details of what a ParquetDatastore object 
 % exactly is).
 % To read only some variables, create a `selectVariables` array with the 
-% Argo parameters to read.
-% Note that the dataset must load all the variables to which filters are 
-% later applied (this is not always the case in python).
+% Argo parameters to read. Note that the dataset must load all the 
+% variables to which filters are later applied.
 % To read all the variables, just do not specify "SelectedVariableNames"
-% when calling parquetDatastore()
-
-%% NB
+% when calling parquetDatastore().
+%
+%% Download
 % If you have not downloaded the database yet, just run first:
 % download_database("ARGO","BGC",true);
 
@@ -78,7 +64,7 @@ startTime = datetime(2023,1,1,0,0,0); % year, month, day, hour (24h format), min
 endTime   = datetime(2024,1,1,0,0,0); % year, month, day, hour (24h format), min, sec
 filter_time = rf.("JULD") >= startTime & rf.("JULD") <= endTime ;
 
-% Combining the two filers in one and assigning it to the ParquetDataset
+% Combining the filters in one and assigning it to the ParquetDataset
 % object
 filter = filter_pres & filter_time & filter_doxy_qc;
 pds.RowFilter = filter;
@@ -94,42 +80,44 @@ if isempty(p)
     disp("Elapsed time to  create parallel environment: " + num2str(elapsed) + " seconds.")
 end
 tic;
-dataBGC_QC_SIGMA1 = readall(pds,UseParallel=true);
+dataBGC = readall(pds,UseParallel=true);
 elapsed = toc;
 disp("Elapsed time to read data into memory in parallel: " + num2str(elapsed) + " seconds.")
 
 %% Reading the data into memory, serially (timing the operation)
 % uncomment the following lines to read data serially (slower)
-tic;
-dataBGC_QC_SIGMA1 = readall(pds,UseParallel=false);
-elapsed = toc;
-disp("Elapsed time to read data into memory serially: " + num2str(elapsed) + " seconds.")
+% tic;
+% dataBGC = readall(pds,UseParallel=false);
+% elapsed = toc;
+% disp("Elapsed time to read data into memory serially: " + num2str(elapsed) + " seconds.")
 
 %% Plotting target data
 % Now we can make a scatter plot of the dissolved oxygen data recorded
 varName = 'DOXY';
+
 % check that (lat0,lon0) are unique, otherwise average data
-[G, LAT, LON] = findgroups(dataBGC_QC_SIGMA1.LATITUDE,dataBGC_QC_SIGMA1.LONGITUDE);
-if height(dataBGC_QC_SIGMA1) ~= height(G)
-    meanVar = splitapply(@mean, dataBGC_QC_SIGMA1.(varName), G);
+[G, LAT, LON] = findgroups(dataBGC.LATITUDE,dataBGC.LONGITUDE);
+if height(dataBGC) ~= height(G)
+    meanVar = splitapply(@mean, dataBGC.(varName), G);
     refTable = table( ...
         LAT, LON, meanVar, ...
         'VariableNames', {'LATITUDE', 'LONGITUDE', varName} ...
         );
 else
-    refTable = dataBGC_QC_SIGMA1;
+    refTable = dataBGC;
 end
+
+% setup figure
 f = figure("Position", [100 300 900 800]) ;
 gx = geoaxes( ...
     'Basemap','None', ...
     'Grid','on' ...
     );
 geobasemap('satellite');
-% geolimits( [-90,90], [-180,180] );
 geoscatter(...
         refTable.LATITUDE, ...
         refTable.LONGITUDE, ...
-        60, ...
+        20, ...
         refTable.(varName), ...
         'filled' ...
         );
@@ -138,7 +126,7 @@ title("Dissolved oxygen measurements");
 
 %% Basic statistics
 % We can also quickly investigate some statistics of the loaded data
-dataStats = summary(dataBGC_QC_SIGMA1);
+dataStats = summary(dataBGC);
 % and for example see the min, max, and median values of the temperatue
 disp("Minimum dissolved oxygen = " + num2str(dataStats.DOXY.Min) + " micromole/kg");
 disp("Maximum dissolved oxygen = " + num2str(dataStats.DOXY.Max) + " micromole/kg");

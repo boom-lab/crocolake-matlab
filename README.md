@@ -8,7 +8,7 @@ CrocoLakeTools is a collection of Matlab scripts that shows how to interface wit
 3. [Contact](#contact)
 
 ### Usage
-To run the scripts, simply run them from your Matlab workspace. Note that you might need Matlab R2022 or newer for compatibility with the parquet format.
+To run the scripts, simply run them from your Matlab workspace. Note that you will need Matlab R2022 or newer for compatibility with the parquet format.
 
 Each scripts loads, filters, and visualizes a different database (Argo or CrocoLake, physical or biogeochemical observations). Before running the script, make sure you downloaded the database: each script contains a commented line of code of the type `download_database(db_name, db_type, db_qc)` just before the first instruction; you can uncomment this the first time you run the script (or copy-paste and run in the command window). For example, in `Example_ARGO_PHY_QC.m` it is `% download_database("ARGO","PHY",true)`.
 

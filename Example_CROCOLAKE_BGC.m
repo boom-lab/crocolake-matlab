@@ -1,37 +1,23 @@
 %% ===================================================================== %%
-% Loading BGC coverage
+% nitrate map - CrocoLake BGC
 % ======================================================================= %
 %
-% This example shows how to read and manipulate Argo data stored in parquet
-% format. We will filter the data by depth (pressure) and time. We will 
-% then compute the average value of the chlorophyll measured by each float 
-% and plot it.
-%
-% This script has been developed and tested on MATLAB R2024a. MATLAB R2022a
-% and newer versions should be supported. Older versions will almost 
-% certainly fail -- parquet is a fairly recent format and MATLAB support is
-% even more recent.
-%
-% 2025-01-08 Update:
-% In the new version of the QC-ed database, only the best values for each
-% paramater are kept and only one parameter name <PARAM> (and <PARAM>_QC)
-% are in the database. <PARAM> contains the value of the GDAC's
-% <PARAM>_ADJUSTED whenever this is present and <PARAM>_ADJUSTED_QC in
-% [1,2], otherwise the value of <PARAM> if <PARAM>_QC in [1,2], otherwise
-% NaN.
+% This example shows how to read and manipulate CrocoLake data.
+% We will filter the data by pressure, time, and location. For each dataset 
+% (Argo, GLODAP), we will then plot each location containing a measurement
+% of the nitrate.
 %
 %% Setup
 % Set up the reader. Here we generate a ParquetDatastore object of the 
 % database (no need to know the details of what a ParquetDatastore object 
 % exactly is).
 % To read only some variables, create a `selectVariables` array with the 
-% Argo parameters to read.
-% Note that the dataset must load all the variables to which filters are 
-% later applied (this is not always the case in python).
+% Argo parameters to read. Note that the dataset must load all the 
+% variables to which filters are later applied.
 % To read all the variables, just do not specify "SelectedVariableNames"
-% when calling parquetDatastore()
-
-%% NB
+% when calling parquetDatastore().
+%
+%% Download
 % If you have not downloaded the database yet, just run first:
 % download_database("CROCOLAKE","BGC",true);
 
@@ -44,7 +30,7 @@ selectVariables = [...
     "JULD",...
     "PRES",...
     "TEMP",...
-    "DOXY",...
+    "NITRATE",...
     "ABS_SAL_COMPUTED",...
     "CONSERVATIVE_TEMP_COMPUTED",...
     "SIGMA1_COMPUTED"
@@ -106,8 +92,8 @@ disp("Elapsed time to read data into memory in parallel: " + num2str(elapsed) + 
 % disp("Elapsed time to read data into memory serially: " + num2str(elapsed) + " seconds.")
 
 %% Plotting target data
-% Now we can make a scatter plot of the dissolved oxygen data recorded
-varName = 'DOXY';
+% Now we can make a scatter plot of the nitrate data recorded
+varName = 'NITRATE';
 % check that (lat0,lon0) are unique, otherwise average data
 [G, LAT, LON] = findgroups(dataBGC.LATITUDE,dataBGC.LONGITUDE);
 if height(dataBGC) ~= height(G)
@@ -127,36 +113,47 @@ gx = geoaxes( ...
     'Grid','on' ...
     );
 geobasemap('satellite');
-for db_name = ["ARGO","GLODAP"]
+handles = cell(1, 2);
+count = 0;
+db_names = ["ARGO","GLODAP"];
+for db_name = db_names
+    count = count + 1;
     if db_name=="ARGO"
-        mrk = 'o';
-        sz = 10;
+        colour = [0.8500 0.3250 0.0980];
+    elseif db_name=="GLODAP"
+        colour = [0.4660 0.6740 0.1880];
     else
-        mrk = 'o';
-        sz = 10;
+        colour = [0.9290 0.6940 0.1250];
     end
 
     plotTable = refTable(strcmp(refTable.DB_NAME, db_name), :);
-    geoscatter(...
+    handles{count} = geoscatter(...
             plotTable.LATITUDE, ...
             plotTable.LONGITUDE, ...
-            sz, ...
+            10, ...
             'filled',...
-            'Marker',...
-            mrk...
+            'Marker','o',...
+            'MarkerFaceColor', colour...
             );
 
     colormap(gx,"copper");
     clim(gx, percentiles);
     hold on;
+
+    % statistics
+    dataStats = summary(plotTable);
+    disp("Minimum nitrate in " + db_name + " dataset: " + num2str(dataStats.NITRATE.Min) + " micromole/kg");
+    disp("Maximum nitrate in " + db_name + " dataset: " + num2str(dataStats.NITRATE.Max) + " micromole/kg");
+    disp("Median nitrate in " + db_name + " dataset: " + num2str(dataStats.NITRATE.Median) + " micromole/kg");
 end
-geolimits( [0,60], [-90,0] );
-title("Dissolved oxygen measurements");
+% geolimits( [0,60], [-90,0] );
+legend([handles{:}], db_names);
+title("Nitrate measurements in [0,60], [-90,0]");
 
 %% Basic statistics
 % We can also quickly investigate some statistics of the loaded data
 dataStats = summary(dataBGC);
 % and for example see the min, max, and median values of the temperatue
-disp("Minimum dissolved oxygen = " + num2str(dataStats.DOXY.Min) + " micromole/kg");
-disp("Maximum dissolved oxygen = " + num2str(dataStats.DOXY.Max) + " micromole/kg");
-disp("Median dissolved oxygen = " + num2str(dataStats.DOXY.Median) + " micromole/kg");
+disp("Minimum nitrate = " + num2str(dataStats.NITRATE.Min) + " micromole/kg");
+disp("Maximum nitrate = " + num2str(dataStats.NITRATE.Max) + " micromole/kg");
+disp("Median nitrate = " + num2str(dataStats.NITRATE.Median) + " micromole/kg");
