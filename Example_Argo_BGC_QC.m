@@ -21,7 +21,7 @@
 % If you have not downloaded the database yet, just run first:
 % download_database("ARGO","BGC",true);
 
-parquetPath = fullfile("./data/1002_BGC_ARGO-QC-DEV-MATLAB/");
+parquetPath = fullfile("./data/1003_BGC_ARGO-QC-MATLAB/");
 location = matlab.io.datastore.FileSet(parquetPath); % for faster parsing
 selectVariables = [...
     "PLATFORM_NUMBER",...

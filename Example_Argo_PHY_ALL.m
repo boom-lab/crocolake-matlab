@@ -21,7 +21,7 @@
 % If you have not downloaded the database yet, just run first:
 % download_database("ARGO","PHY",false);
 
-parquetPath = fullfile("./data/1010_PHY_ARGO-CLOUD-DEV-MATLAB/");
+parquetPath = fullfile("./data/1011_PHY_ARGO-CLOUD-MATLAB/");
 location = matlab.io.datastore.FileSet(parquetPath); % for faster parsing
 selectVariables = [...
     "PLATFORM_NUMBER",...

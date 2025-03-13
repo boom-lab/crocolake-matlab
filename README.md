@@ -1,6 +1,6 @@
 ## CrocoLake-Matlab
 
-CrocoLakeTools is a collection of Matlab scripts that shows how to interface with CrocoLake and Argo's parquet databases.
+CrocoLake-Matlab is a collection of Matlab scripts that shows how to interface with CrocoLake and Argo's parquet databases.
 
 ### Table of Contents
 1. [Usage](#usage)

@@ -21,7 +21,7 @@
 % If you have not downloaded the database yet, just run first:
 % download_database("CROCOLAKE","PHY",true);
 
-parquetPath = fullfile("./data/0006_PHY_CROCOLAKE-QC-MERGED-DEV-MATLAB/");
+parquetPath = fullfile("./data/0007_PHY_CROCOLAKE-QC-MERGED-MATLAB/");
 location = matlab.io.datastore.FileSet(parquetPath); % for faster parsing
 selectVariables = [...
     "DB_NAME",...
